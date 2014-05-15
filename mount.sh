@@ -2,12 +2,22 @@
 address="corellian-corvette.mini.true"
 
 function loadKey {
-    fingerprint=$(ssh-add -l|awk '{print $2}'|head -n1)
-    if [ $fingerprint == "47:80:fa:a9:3d:d8:a1:26:65:92:c7:92:1b:31:27:12" ] || [ $fingerprint == "1f:8f:1e:f1:8a:bb:67:9e:69:e2:e6:1d:a3:15:ad:d3" ]; then
-        echo "Key loaded"
+    # We want to load the master key
+    keyname='masterkey'
+    wanted_print=$(ssh-keygen -lf ~/.ssh/$keyname|cut -d' ' -f2)
+    fingerprints=($(ssh-add -l|awk '{print $2}'))
+    loaded='false'
+    for fingerprint in ${fingerprints[@]}
+    do
+      if [ $fingerprint == $wanted_print ]; then
+        loaded='true'
+      fi
+    done
+    if [ $loaded == 'false' ]; then
+      echo "Loading key"
+      ssh-add ~/.ssh/$keyname
     else
-        echo "Key not loaded"
-        ssh-add
+      echo "Key already loaded"
     fi
 }
 
