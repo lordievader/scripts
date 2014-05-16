@@ -31,19 +31,19 @@ function nfsMount {
     sudo mount corellian-corvette.mini.true:/home/lordievader	/media/lordievader
 
     echo Movies
-    sudo mount corellian-corvette.mini.true:/media/Movies		/media/Movies
+    sudo mount corellian-corvette.mini.true:/media/Movies		  /media/Movies
 
     echo Music
-    sudo mount corellian-corvette.mini.true:/media/Music		/media/Music
+    sudo mount corellian-corvette.mini.true:/media/Music		  /media/Music
 
     echo Storage
     sudo mount corellian-corvette.mini.true:/media/Storage		/media/Storage
 
     echo Web
-    sudo mount corellian-corvette.mini.true:/var/www/			/media/Web
+    sudo mount corellian-corvette.mini.true:/www-int  			  /media/Web
 
     echo Anime
-    sudo mount corellian-corvette.mini.true:/media/Anime		/media/Anime
+    sudo mount corellian-corvette.mini.true:/media/Anime		  /media/Anime
 
 }
 
@@ -98,7 +98,7 @@ function sshfsMount {
     sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/media/Storage  /media/Storage
 
     echo Web
-    sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/var/www    /media/Web
+    sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/www-int    /media/Web
 
     echo Anime
     sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/media/Anime    /media/Anime
