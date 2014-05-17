@@ -8,6 +8,8 @@ declare -A mounts=( ["/home/lordievader"]="/media/lordievader"
                     ["/media/Software"]="/media/Software"
                     ["/media/Storage"]="/media/Storage"
                     ["/www-int"]="/media/Web")
+declare -A truecrypt=(["/dev/sda5"]="/media/Documents"
+                      ["/dev/sda8"]="/media/Photos")
 
 # Define the host
 nfs_host='corellian-corvette.mini.true'
@@ -50,6 +52,40 @@ function nfsMount () {
   return 0
 }
 
+function sshfsMount () {
+  host=$1
+  user='lordievader'
+  target=$2
+  destination=$3
+  echo "$target --> $destination"
+  if [ "$(mount|grep $destination)" == '' ]; then
+    sshfs -o idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
+    if [ "$(mount|grep $destination)" == '' ]; then
+      echo "Mount failed"
+      return 1
+    fi
+  else
+    echo "Already mounted"
+  fi
+  return 0
+}
+
+function truecryptMount () {
+  target=$1
+  destination=$2
+  echo "$target --> $destination"
+  if [ "$(mount|grep $destination)" == '' ]; then
+    sudo truecrypt --mount $target $destination
+    if [ "$(mount|grep $destination)" == '' ]; then
+      echo "Mount failed"
+      return 1
+    fi
+  else
+    echo "Already mounted"
+  fi
+  return 0
+}
+
 function smbMount {
     echo Samba
     echo
@@ -80,24 +116,6 @@ function smbMount {
     sudo mount -t cifs -o user=lordievader,password="$password",ip=127.0.0.1,port=1139,uid=lordievader,gid=lordievader,file_mode=0770,dir_mode=0770 //localhost/Anime /media/Anime
 }
 
-function sshfsMount () {
-  host=$1
-  user='lordievader'
-  target=$2
-  destination=$3
-  echo "$target --> $destination"
-  if [ "$(mount|grep $destination)" == '' ]; then
-    sshfs -o idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
-    if [ "$(mount|grep $destination)" == '' ]; then
-      echo "Mount failed"
-      return 1
-    fi
-  else
-    echo "Already mounted"
-  fi
-  return 0
-}
-
 function kill_used () {
   mount=$1
   flags=$2
@@ -120,6 +138,8 @@ function unmount_helper () {
     sudo umount $lazy $mount
   elif [ $type == 'sshfs' ]; then
     fusermount -u $lazy $mount
+  elif [ $type == 'truecrypt' ]; then
+    sudo truecrypt -d $mount
   fi
 }
 
@@ -166,6 +186,26 @@ function unmount {
       unmount_helper 'sshfs' $mount '-z'
     fi
   done
+
+  # Truecrypt mounts
+  truecrypt_mounts=($(df -hT|grep truecrypt|awk '{print $7}'))
+  for mount in ${truecrypt_mounts[@]}; do
+    counter=0
+    echo $mount
+    while [ "$(mount|grep $mount)" != '' ] && [ $counter -lt 5 ]; do
+      echo "Try: $counter"
+      if [ $counter -lt 4 ]; then
+        kill_used $mount
+      else
+        kill_used $mount '-9'
+      fi
+      unmount_helper 'truecrypt' $mount
+      counter=$(echo $counter+1|bc)
+    done
+    if [ "$(mount|grep $mount)" != '' ]; then
+      echo "Unmount failed"
+    fi
+  done
 }
 
 
@@ -195,6 +235,16 @@ elif [ $1 == "-m" ]; then
       fi
     done
   fi
+
+elif [ $1 == "-t" ]; then
+  
+  # Truecrypt mounts
+  echo "Mounting Truecrypt volumes"
+  for mount in ${!truecrypt[@]}; do
+    if ! truecryptMount $mount ${truecrypt[$mount]}; then
+      exit 1
+    fi
+  done
 
 elif [ $1 == "-u" ]; then
     unmount
