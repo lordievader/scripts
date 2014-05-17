@@ -1,6 +1,6 @@
 #!/bin/bash
 export DISPLAY=:0
-nfs -u
+/home/lordievader/scripts/mount.sh -u
 sudo truecrypt -d /media/Documents
 #sudo truecrypt -d /media/Photos
 

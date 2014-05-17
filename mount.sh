@@ -104,45 +104,83 @@ function sshfsMount {
     sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/media/Anime    /media/Anime
 }
 
-function unmount {
-  
-    mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-    if [ $mountpoint ]; then
-   
-        mounttype=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $1; }'|sed 's/:[^:]*$//')
-
-        if [ $mounttype == "lordievader@lordievader.no-ip.org" ]; then
-            echo SSHFS
-
-            mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-            while [ $mountpoint ]; do
-                echo $mountpoint
-                fusermount -zu $mountpoint
-                mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-            done
-
-        elif [ $(echo $mounttype | grep -e "localhost") ]; then
-            echo SMBFS
-
-            mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-            while [ $mountpoint ]; do
-                echo $mountpoint
-                sudo umount $mountpoint
-                mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-            done
-
-        else
-            echo NFS
-
-            mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-            while [ $mountpoint ]; do
-                echo $mountpoint
-                sudo umount $mountpoint
-                mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-            done
-        fi
-    fi
+function kill_used () {
+  mount=$1
+  used_by=($(lsof -t $mount))
+  lsof $mount
+  for pid in ${used_by[@]}; do
+    echo "Filesystem used by $pid, killing"
+    kill $pid
+  done
 }
+
+function unmount_helper () {
+  type=$1
+  mount=$2
+  lazy=$3
+
+  if [ $type == 'nfs' ]; then
+    echo "Unmounting $mount"
+    sudo umount $lazy $mount
+  fi
+}
+
+function unmount {
+
+  # NFS mount points
+  nfs_mounts=($(df -hT|grep nfs|awk '{print $7}'))
+  for mount in ${nfs_mounts[@]}; do
+    counter=0
+    echo $mount
+    while [ "$(mount|grep $mount)" != '' ] && [ $counter -lt 5 ]; do
+      echo "Try: $counter"
+      kill_used $mount
+      unmount_helper 'nfs' $mount
+      counter=$(echo $counter+1|bc)
+    done
+    if [ "$(mount|grep $mount)" != '' ]; then
+      echo "Unmount failed, will lazy unmount"
+      unmount_helper 'nfs' $mount '-l'
+    fi
+  done
+}
+#     mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
+#     if [ $mountpoint ]; then
+#    
+#         mounttype=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $1; }'|sed 's/:[^:]*$//')
+# 
+#         if [ $mounttype == "lordievader@lordievader.no-ip.org" ]; then
+#             echo SSHFS
+# 
+#             mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
+#             while [ $mountpoint ]; do
+#                 echo $mountpoint
+#                 fusermount -zu $mountpoint
+#                 mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
+#             done
+# 
+#         elif [ $(echo $mounttype | grep -e "localhost") ]; then
+#             echo SMBFS
+# 
+#             mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
+#             while [ $mountpoint ]; do
+#                 echo $mountpoint
+#                 sudo umount $mountpoint
+#                 mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
+#             done
+# 
+#         else
+#             echo NFS
+# 
+#             mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
+#             while [ $mountpoint ]; do
+#                 echo $mountpoint
+#                 sudo umount $mountpoint
+#                 mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
+#             done
+#         fi
+#     fi
+# }
 
 ##  Main loop
 if [ -z $1 ]; then
