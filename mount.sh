@@ -1,5 +1,17 @@
 #!/bin/bash
-address="corellian-corvette.mini.true"
+
+# Define a mount dictionary
+declare -A mounts=( ["/home/lordievader"]="/media/lordievader"
+                    ["/media/Anime"]="/media/Anime"
+                    ["/media/Movies"]="/media/Movies"
+                    ["/media/Music"]="/media/Music"
+                    ["/media/Software"]="/media/Software"
+                    ["/media/Storage"]="/media/Storage"
+                    ["/www-int"]="/media/Web")
+
+# Define the host
+nfs_host='corellian-corvette.mini.true'
+sshfs_host='lordievader.no-ip.org'
 
 function loadKey {
     # We want to load the master key
@@ -21,30 +33,21 @@ function loadKey {
     fi
 }
 
-function nfsMount {
-    echo NFS
-    echo
-    
-    unmount
-
-    echo lordievader
-    sudo mount corellian-corvette.mini.true:/home/lordievader	/media/lordievader
-
-    echo Movies
-    sudo mount corellian-corvette.mini.true:/media/Movies		  /media/Movies
-
-    echo Music
-    sudo mount corellian-corvette.mini.true:/media/Music		  /media/Music
-
-    echo Storage
-    sudo mount corellian-corvette.mini.true:/media/Storage		/media/Storage
-
-    echo Web
-    sudo mount corellian-corvette.mini.true:/www-int  			  /media/Web
-
-    echo Anime
-    sudo mount corellian-corvette.mini.true:/media/Anime		  /media/Anime
-
+function nfsMount () {
+  host=$1
+  target=$2
+  destination=$3
+  echo "$target --> $destination"
+  if [ "$(mount|grep $destination)" == '' ]; then
+    sudo mount $host:$target $destination
+    if [ "$(mount|grep $destination)" == '' ]; then
+      echo "Mount failed"
+      return 1
+    fi
+  else
+    echo "Already mounted"
+  fi
+  return 0
 }
 
 function smbMount {
@@ -77,31 +80,22 @@ function smbMount {
     sudo mount -t cifs -o user=lordievader,password="$password",ip=127.0.0.1,port=1139,uid=lordievader,gid=lordievader,file_mode=0770,dir_mode=0770 //localhost/Anime /media/Anime
 }
 
-function sshfsMount {
-    echo SSHFS
-    echo
-
-    unmount
-
-    loadKey
-    
-    echo lordievader 
-    sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/home/lordievader /media/lordievader
-
-    echo Movies
-    sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/media/Movies   /media/Movies
-
-    echo Music
-    sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/media/Music    /media/Music
-
-    echo Storage
-    sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/media/Storage  /media/Storage
-
-    echo Web
-    sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/www-int    /media/Web
-
-    echo Anime
-    sshfs -o idmap=user,ServerAliveInterval=15 lordievader@lordievader.no-ip.org:/media/Anime    /media/Anime
+function sshfsMount () {
+  host=$1
+  user='lordievader'
+  target=$2
+  destination=$3
+  echo "$target --> $destination"
+  if [ "$(mount|grep $destination)" == '' ]; then
+    sshfs -o idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
+    if [ "$(mount|grep $destination)" == '' ]; then
+      echo "Mount failed"
+      return 1
+    fi
+  else
+    echo "Already mounted"
+  fi
+  return 0
 }
 
 function kill_used () {
@@ -148,11 +142,10 @@ function unmount {
     done
     if [ "$(mount|grep $mount)" != '' ]; then
       echo "Unmount failed, will lazy unmount"
-      
       unmount_helper 'nfs' $mount '-l'
     fi
   done
-  
+
   # SSHFS mounts
   sshfs_mounts=($(df -hT|grep sshfs|awk '{print $7}'))
   for mount in ${sshfs_mounts[@]}; do
@@ -170,65 +163,38 @@ function unmount {
     done
     if [ "$(mount|grep $mount)" != '' ]; then
       echo "Unmount failed, will lazy unmount"
-      
       unmount_helper 'sshfs' $mount '-z'
     fi
   done
 }
-#     mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-#     if [ $mountpoint ]; then
-#    
-#         mounttype=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $1; }'|sed 's/:[^:]*$//')
-# 
-#         if [ $mounttype == "lordievader@lordievader.no-ip.org" ]; then
-#             echo SSHFS
-# 
-#             mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-#             while [ $mountpoint ]; do
-#                 echo $mountpoint
-#                 fusermount -zu $mountpoint
-#                 mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-#             done
-# 
-#         elif [ $(echo $mounttype | grep -e "localhost") ]; then
-#             echo SMBFS
-# 
-#             mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-#             while [ $mountpoint ]; do
-#                 echo $mountpoint
-#                 sudo umount $mountpoint
-#                 mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-#             done
-# 
-#         else
-#             echo NFS
-# 
-#             mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-#             while [ $mountpoint ]; do
-#                 echo $mountpoint
-#                 sudo umount $mountpoint
-#                 mountpoint=$(mount|grep -e "lordievader.no-ip.org" -e "corellian-corvette.mini.true" -e "localhost"|head -n 1|awk '{ print $3; }')
-#             done
-#         fi
-#     fi
-# }
+
 
 ##  Main loop
 if [ -z $1 ]; then
-	echo "  Kasui mount script
-        Usage: nfs [options]
+  echo "Mount script
+Usage: $0 [options]
 
-		-m		mount directories
-        -u      unmount directories"
+  -m    mount directories
+  -u    unmount directories"
 
 elif [ $1 == "-m" ]; then
-	if ping -q -c1 corellian-corvette.mini.true; then
-        nfsMount
 
-	else
-        #smbMount
-        sshfsMount
-	fi
+  # Check what transport protocol needs to be used and mount things
+  if ping -q -c1 $host 2&>1 > /dev/null; then
+    echo "Using NFS"
+    for mount in ${!mounts[@]}; do
+      if ! nfsMount $nfs_host $mount ${mounts[$mount]}; then
+        exit 1
+      fi
+    done
+  else
+    echo "Using SSHFS"
+    for mount in ${!mounts[@]}; do
+      if ! sshfsMount $sshfs_host $mount ${mounts[$mount]}; then
+        exit 1
+      fi
+    done
+  fi
 
 elif [ $1 == "-u" ]; then
     unmount
