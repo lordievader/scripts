@@ -106,11 +106,13 @@ function sshfsMount {
 
 function kill_used () {
   mount=$1
+  flags=$2
   used_by=($(lsof -t $mount))
-  lsof $mount
+
   for pid in ${used_by[@]}; do
-    echo "Filesystem used by $pid, killing"
-    kill $pid
+    ps hp $pid
+    echo "Filesystem used by $pid, killing. Flags: $flags"
+    kill $flags $pid
   done
 }
 
@@ -119,9 +121,11 @@ function unmount_helper () {
   mount=$2
   lazy=$3
 
+  echo "Unmounting $mount"
   if [ $type == 'nfs' ]; then
-    echo "Unmounting $mount"
     sudo umount $lazy $mount
+  elif [ $type == 'sshfs' ]; then
+    fusermount -u $lazy $mount
   fi
 }
 
@@ -134,13 +138,40 @@ function unmount {
     echo $mount
     while [ "$(mount|grep $mount)" != '' ] && [ $counter -lt 5 ]; do
       echo "Try: $counter"
-      kill_used $mount
+      if [ $counter -lt 4 ]; then
+        kill_used $mount
+      else
+        kill_used $mount '-9'
+      fi
       unmount_helper 'nfs' $mount
       counter=$(echo $counter+1|bc)
     done
     if [ "$(mount|grep $mount)" != '' ]; then
       echo "Unmount failed, will lazy unmount"
+      
       unmount_helper 'nfs' $mount '-l'
+    fi
+  done
+  
+  # SSHFS mounts
+  sshfs_mounts=($(df -hT|grep sshfs|awk '{print $7}'))
+  for mount in ${sshfs_mounts[@]}; do
+    counter=0
+    echo $mount
+    while [ "$(mount|grep $mount)" != '' ] && [ $counter -lt 5 ]; do
+      echo "Try: $counter"
+      if [ $counter -lt 4 ]; then
+        kill_used $mount
+      else
+        kill_used $mount '-9'
+      fi
+      unmount_helper 'sshfs' $mount
+      counter=$(echo $counter+1|bc)
+    done
+    if [ "$(mount|grep $mount)" != '' ]; then
+      echo "Unmount failed, will lazy unmount"
+      
+      unmount_helper 'sshfs' $mount '-z'
     fi
   done
 }
