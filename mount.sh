@@ -7,7 +7,8 @@ declare -A mounts=( ["/home/lordievader"]="/media/lordievader"
                     ["/media/Music"]="/media/Music"
                     ["/media/Software"]="/media/Software"
                     ["/media/Storage"]="/media/Storage"
-                    ["/www-int"]="/media/Web")
+                    ["/www-int"]="/media/Web"
+                    ["/www-ext"]="/media/Web-ext")
 declare -A truecrypt=(["/dev/sda5"]="/media/Documents"
                       ["/dev/sda8"]="/media/Photos")
 
@@ -220,7 +221,7 @@ Usage: $0 [options]
 elif [ $1 == "-m" ]; then
 
   # Check what transport protocol needs to be used and mount things
-  if ping -q -c1 $host 2&>1 > /dev/null; then
+  if ping -q -c1 $nfs_host  > /dev/null; then
     echo "Using NFS"
     for mount in ${!mounts[@]}; do
       if ! nfsMount $nfs_host $mount ${mounts[$mount]}; then
