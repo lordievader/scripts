@@ -9,4 +9,5 @@ else
         synergyc star-destroyer
     fi
 fi
+cd /home/lordievader/
 nohup /usr/share/kmc/recieve.py&
