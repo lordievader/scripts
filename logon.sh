@@ -1,5 +1,7 @@
 #!/bin/bash
 export DISPLAY=:0
+
+# Start synergy
 if [ $HOSTNAME == 'star-destroyer' ]; then
     if [ "$(pgrep synergys)" == '' ]; then
         synergys -c ~/.synergy.conf
@@ -9,5 +11,14 @@ else
         synergyc star-destroyer
     fi
 fi
-cd /home/lordievader/
-nohup /usr/share/kmc/recieve.py&
+
+# Start kmc
+cd /home/$USER
+if [ "$(pgrep recieve.py)" == '' ]; then
+  nohup /usr/share/kmc/recieve.py&
+fi
+
+# Load gamma settings
+cd /home/$USER
+screen=$(xrandr|grep "\ connected"|cut -d ' ' -f1)
+./scripts/gamma.sh $screen --set
