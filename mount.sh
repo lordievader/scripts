@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Define a mount dictionary
-declare -A mounts=( ["/home/lordievader"]="/media/lordievader"
+declare -A mounts=( ["/home/lordievader"]="/media/homedir"
                     ["/media/Anime"]="/media/Anime"
                     ["/media/Movies"]="/media/Movies"
                     ["/media/Music"]="/media/Music"
                     ["/media/Software"]="/media/Software"
                     ["/media/Storage"]="/media/Storage"
-                    ["/www-int"]="/media/Web"
-                    ["/www-ext"]="/media/Web-ext")
+                    ["/www-int"]="/media/www-int"
+                    ["/www-ext"]="/media/www-ext")
 declare -A truecrypt=(["/dev/sda5"]="/media/Documents"
                       ["/dev/sda8"]="/media/Photos")
 
