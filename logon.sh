@@ -2,7 +2,7 @@
 export DISPLAY=:0
 
 # Start synergy
-if [ $HOSTNAME == 'star-destroyer' ]; then
+if [ $HOSTNAME == 'ebon-hawk' ] || [ $HOSTNAME == 'millenium-falcon' ]; then
     if [ "$(pgrep synergys)" == '' ]; then
         synergys -c ~/.synergy.conf
     fi
