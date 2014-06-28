@@ -8,7 +8,7 @@ if [ $HOSTNAME == 'ebon-hawk' ] || [ $HOSTNAME == 'millenium-falcon' ]; then
     fi
 else
     if [ "$(pgrep synergyc)" == '' ]; then
-        synergyc star-destroyer
+        synergyc ebon-hawk
     fi
 fi
 
@@ -22,3 +22,8 @@ fi
 cd /home/$USER
 screen=$(xrandr|grep "\ connected"|cut -d ' ' -f1)
 ./scripts/gamma.sh $screen --set
+
+# Restart MPD/Pulseaudio
+if [ $HOSTNAME == 'star-destroyer' ]; then
+  ssh lordievader@corellian-corvette "sudo service music restart"
+fi
