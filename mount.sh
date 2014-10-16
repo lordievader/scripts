@@ -2,13 +2,12 @@
 
 # Define a mount dictionary
 declare -A mounts=( ["/home/lordievader"]="/media/homedir"
-                    ["/media/Anime"]="/media/Anime"
-                    ["/media/Movies"]="/media/Movies"
-                    ["/media/Music"]="/media/Music"
-                    ["/media/Software"]="/media/Software"
-                    ["/media/Storage"]="/media/Storage"
-                    ["/www-int"]="/media/www-int"
-                    ["/www-ext"]="/media/www-ext")
+                    ["/mnt/multimedia/shows"]="/media/shows"
+                    ["/mnt/multimedia/movies"]="/media/movies"
+                    ["/mnt/multimedia/music"]="/media/music"
+                    ["/mnt/data/software"]="/media/software"
+                    ["/mnt/data/storage"]="/media/storage"
+                    ["/mnt/data/www"]="/media/www")
 declare -A truecrypt=(["/dev/sda5"]="/media/Documents"
                       ["/dev/sda8"]="/media/Photos")
 
