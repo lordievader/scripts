@@ -15,7 +15,7 @@ fi
 # Start kmc
 cd /home/$USER
 if [ "$(pgrep recieve.py)" == '' ]; then
-  nohup /usr/share/kmc/receive.py&
+  nohup /usr/share/kmc/kmcd.py&
 fi
 
 # Load gamma settings
