@@ -2,13 +2,13 @@
 export DISPLAY=:0
 
 # Start synergy
-if [ $HOSTNAME == 'star-destroyer' ]; then
+if [ $HOSTNAME == 'soulless-one' ] && [ $HOSTNAME != 'star-destroyer' ]; then
     if [ "$(pgrep synergys)" == '' ]; then
         synergys -c ~/.synergy.conf
     fi
 else
     if [ "$(pgrep synergyc)" == '' ]; then
-        synergyc star-destroyer
+        synergyc soulless-one
     fi
 fi
 
