@@ -4,10 +4,10 @@ echo "Setting DISPLAY environment to :$DISPLAY"
 export DISPLAY=:$DISPLAY
 cd /home/$USER
 
-scripts=('pulseaudio' 'synergys' 'kmcd' 'xscreensaver')
+scripts=('pulseaudio' 'synergys' '/usr/share/kmc/kmcd.py' 'xscreensaver')
 declare -A arguments=(  ["pulseaudio"]="--start"
 			["synergys"]="-c /home/$USER/.synergy.conf"
-			["kmcd"]="nohup"
+			["/usr/share/kmc/kmcd.py"]="nohup"
 			["xscreensaver"]="")
 
 function execute_command () {
@@ -18,6 +18,7 @@ function execute_command () {
 	else
 		command="$program $arguments&"
 	fi
+	echo $command
 	eval $command
 }
 
@@ -30,7 +31,7 @@ function wallpaper () {
 function main () {
 
 	for item in ${scripts[@]}; do
-		if [ "$(pgrep $item)" == '' ]; then
+		if [ "$(pgrep `echo $item|sed 's,/.*/,,g'`)" == '' ]; then
 
 			echo "Starting $item"
 			execute_command $item "${arguments[$item]}"
