@@ -18,7 +18,7 @@ def kill_others():
     others = subprocess.getoutput("pgrep wallpaper.py").split("\n")
     for other in others:
 
-        if int(other) != int(pid):
+        if other != '' and int(other) != int(pid):
 
             os.kill(int(other), signal.SIGTERM)
 
@@ -55,6 +55,12 @@ def random_image(image_pool):
     number = random.randint(0,len(image_pool))
     return image_pool[number]
 
+def get_width():
+
+    command = "xrandr|grep \*|awk '{print $1}'"
+    resolution = subprocess.getoutput(command).split('x')[0]
+    return resolution
+
 def set_background(image):
 
     command = "feh --bg-fill {0}".format(image)
@@ -63,13 +69,15 @@ def set_background(image):
 
 def set_lockscreen(image):
 
+    resolution = get_width()
     extension = image[-3:]
     if extension == "jpg":
 
-        command = "convert {0} /tmp/lockscreen.png".format(image)
+        command = "convert -resize {0} {1} /tmp/lockscreen.png".format(resolution, image)
     else:
 
         command = "cp {0} /tmp/lockscreen.png".format(image)
+    print(command)
     subprocess.getoutput(command)
 
         
