@@ -177,6 +177,7 @@ def main():
 
             image = random_image(image_pool)
             set_background(image)
+            time_change = 0
           else:
 
             receive()
