@@ -83,6 +83,7 @@ def get_width():
 def set_background(image):
 
     command = "feh --bg-fill {0}".format(image)
+    print(command)
     subprocess.getoutput(command)
     set_lockscreen(image)
 
