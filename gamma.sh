@@ -13,11 +13,11 @@ else
 fi
 
 LENGTH=$(echo ${#CRT} + 2 | bc)
-r=$(cat Documents/files/gamma.txt|grep "$CRT"r)
+r=$(cat Documents/local/files/gamma.txt|grep "$CRT"r)
 r=${r:$LENGTH}
-g=$(cat Documents/files/gamma.txt|grep "$CRT"g)
+g=$(cat Documents/local/files/gamma.txt|grep "$CRT"g)
 g=${g:$LENGTH}
-b=$(cat Documents/files/gamma.txt|grep "$CRT"b)
+b=$(cat Documents/local/files/gamma.txt|grep "$CRT"b)
 b=${b:$LENGTH}
 
 VALUE="$3"
@@ -34,9 +34,9 @@ else
     echo "What red gamma value? For "$CRT" Enter 's' to save the previous value."
     read -e GAMMA
     if [ $GAMMA == "s" ]; then
-      cat Documents/files/gamma.txt | grep -v "$CRT""r" > Documents/files/gamma2.txt
-      echo "$CRT""r=$VALUE" >> Documents/files/gamma2.txt
-      cat Documents/files/gamma2.txt > Documents/files/gamma.txt
+      cat Documents/local/files/gamma.txt | grep -v "$CRT""r" > Documents/local/files/gamma2.txt
+      echo "$CRT""r=$VALUE" >> Documents/local/files/gamma2.txt
+      cat Documents/local/files/gamma2.txt > Documents/local/files/gamma.txt
       ./scripts/gamma.sh $CRT g
     else
       xrandr --output $CRT --gamma $GAMMA:$g:$b
@@ -47,9 +47,9 @@ else
     echo "What green gamma value? For "$CRT" Enter 's' to save the previous value."
     read -e GAMMA
     if [ $GAMMA == "s" ]; then
-      cat Documents/files/gamma.txt | grep -v "$CRT""g" > Documents/files/gamma2.txt
-      echo "$CRT""g=$VALUE" >> Documents/files/gamma2.txt
-      cat Documents/files/gamma2.txt > Documents/files/gamma.txt
+      cat Documents/local/files/gamma.txt | grep -v "$CRT""g" > Documents/local/files/gamma2.txt
+      echo "$CRT""g=$VALUE" >> Documents/local/files/gamma2.txt
+      cat Documents/local/files/gamma2.txt > Documents/local/files/gamma.txt
       ./scripts/gamma.sh $CRT b
     else
       xrandr --output $CRT --gamma $r:$GAMMA:$b
@@ -60,9 +60,9 @@ else
     echo "What blue gamma value? For "$CRT" Enter 's' to save the previous value."
     read -e GAMMA
     if [ $GAMMA == "s" ]; then
-      cat Documents/files/gamma.txt | grep -v "$CRT""b" > Documents/files/gamma2.txt
-      echo "$CRT""b=$VALUE" >> Documents/files/gamma2.txt
-      cat Documents/files/gamma2.txt > Documents/files/gamma.txt
+      cat Documents/local/files/gamma.txt | grep -v "$CRT""b" > Documents/local/files/gamma2.txt
+      echo "$CRT""b=$VALUE" >> Documents/local/files/gamma2.txt
+      cat Documents/local/files/gamma2.txt > Documents/local/files/gamma.txt
 
       echo "Configure another display? (y/n)"
       read -e CONFIGURE
@@ -85,11 +85,11 @@ else
   echo "What white gamma value? For "$CRT" Enter 's' to save the previous value."
   read -e GAMMA
   if [ $GAMMA == "s" ]; then
-    cat Documents/files/gamma.txt | grep -v "$CRT"> Documents/files/gamma2.txt
-    echo "$CRT""r=$VALUE" >> Documents/files/gamma2.txt
-    echo "$CRT""g=$VALUE" >> Documents/files/gamma2.txt
-    echo "$CRT""b=$VALUE" >> Documents/files/gamma2.txt
-    cat Documents/files/gamma2.txt > Documents/files/gamma.txt
+    cat Documents/local/files/gamma.txt | grep -v "$CRT"> Documents/local/files/gamma2.txt
+    echo "$CRT""r=$VALUE" >> Documents/local/files/gamma2.txt
+    echo "$CRT""g=$VALUE" >> Documents/local/files/gamma2.txt
+    echo "$CRT""b=$VALUE" >> Documents/local/files/gamma2.txt
+    cat Documents/local/files/gamma2.txt > Documents/local/files/gamma.txt
     ./scripts/gamma.sh $CRT r
   else
     xrandr --output $CRT --gamma $GAMMA:$GAMMA:$GAMMA
