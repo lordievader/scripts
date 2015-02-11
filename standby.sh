@@ -6,7 +6,8 @@ qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock
 sleep 1
 sudo pm-suspend
 sleep 1
-xrandr --output LVDS --auto
+#xrandr --output LVDS --off
+#xrandr --output LVDS --auto
 /home/lordievader/scripts/gamma.sh LVDS --set
 
 counter=0

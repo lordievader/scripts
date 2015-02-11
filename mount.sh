@@ -1,13 +1,15 @@
 #!/bin/bash
 
 # Define a mount dictionary
-declare -A mounts=( ["/home/lordievader"]="/media/homedir"
-                    ["/mnt/multimedia/shows"]="/media/shows"
-                    ["/mnt/multimedia/movies"]="/media/movies"
-                    ["/mnt/multimedia/music"]="/media/music"
-                    ["/mnt/data/software"]="/media/software"
-                    ["/mnt/data/storage"]="/media/storage"
-                    ["/mnt/data/www"]="/media/www")
+declare -A mounts=( ["/home/lordievader"]="/mnt/data/homedir"
+                    ["/mnt/multimedia/shows"]="/mnt/multimedia/shows"
+                    ["/mnt/multimedia/movies"]="/mnt/multimedia/movies"
+                    ["/mnt/multimedia/music"]="/mnt/multimedia/music"
+                    ["/mnt/data/software"]="/mnt/data/software"
+                    #["/mnt/data/storage"]="/mnt/data/storage"
+                    ["/mnt/data/www"]="/mnt/data/www"
+                    ["/mnt/data/src"]="/mnt/data/src"
+                    ["/mnt/data/git"]="/mnt/data/git")
 declare -A truecrypt=(["/dev/sda5"]="/media/Documents"
                       ["/dev/sda8"]="/media/Photos")
 
@@ -15,24 +17,43 @@ declare -A truecrypt=(["/dev/sda5"]="/media/Documents"
 nfs_host='corellian-corvette.mini.true'
 sshfs_host='lordievader.no-ip.org'
 
-function loadKey {
-    # We want to load the master key
-    keyname='masterkey'
-    wanted_print=$(ssh-keygen -lf ~/.ssh/$keyname|cut -d' ' -f2)
-    fingerprints=($(ssh-add -l|awk '{print $2}'))
-    loaded='false'
-    for fingerprint in ${fingerprints[@]}
-    do
-      if [ $fingerprint == $wanted_print ]; then
-        loaded='true'
-      fi
-    done
-    if [ $loaded == 'false' ]; then
-      echo "Loading key"
-      ssh-add ~/.ssh/$keyname
+function checkKey () {
+  keyname=$1
+  wanted_print=$(ssh-keygen -lf ~/.ssh/$keyname|cut -d' ' -f2)
+  fingerprints=$(ssh-add -l|awk '{print $2}'|grep $wanted_print)
+  if [ -z $fingerprints ]; then
+    loaded=1
+  else
+    loaded=0
+  fi
+}
+
+function loadSpecificKey () {
+  keyname=$1
+  echo "Loading key $key"
+  ssh-add /home/lordievader/.ssh/$keyname
+  return $?
+}
+
+function loadAllKeys {
+  keynames=('masterkey' 'millenium-falcon')
+  for key in ${keynames[@]}; do
+    checkKey $key
+    if [ $loaded == 1 ]; then
+      loadSpecificKey $key
     else
-      echo "Key already loaded"
+      echo "Key $key already loaded"
     fi
+  done
+}
+
+function loadKey () {
+  arg=$1
+  if [[ $arg == *a* ]]; then
+    loadAllKeys
+  else
+    loadSpecificKey $2
+  fi
 }
 
 function nfsMount () {
@@ -40,8 +61,8 @@ function nfsMount () {
   target=$2
   destination=$3
   echo "$target --> $destination"
-  if [ "$(mount|grep $destination)" == '' ]; then
-    sudo mount $host:$target $destination
+  if [ "$(mount|grep $destination\ )" == '' ]; then
+    sudo mount -o hard,intr,retrans=3,timeo=10 $host:$target $destination
     if [ "$(mount|grep $destination)" == '' ]; then
       echo "Mount failed"
       return 1
@@ -58,7 +79,7 @@ function sshfsMount () {
   target=$2
   destination=$3
   echo "$target --> $destination"
-  if [ "$(mount|grep $destination)" == '' ]; then
+  if [ "$(mount|grep $destination\ )" == '' ]; then
     sshfs -o idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
     if [ "$(mount|grep $destination)" == '' ]; then
       echo "Mount failed"
@@ -248,6 +269,6 @@ elif [ $1 == "-t" ]; then
 
 elif [ $1 == "-u" ]; then
     unmount
-elif [ $1 == "-k" ]; then
-    loadKey
+elif [[ $1 == -*k* ]]; then
+    loadKey $1 $2
 fi
