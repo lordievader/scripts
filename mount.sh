@@ -15,7 +15,7 @@ declare -A truecrypt=(["/dev/sda5"]="/media/Documents"
 
 # Define the host
 nfs_host='corellian-corvette.mini.true'
-sshfs_host='lordievader.no-ip.org'
+sshfs_host='corellian'
 
 function checkKey () {
   keyname=$1
@@ -52,7 +52,10 @@ function loadKey () {
   if [[ $arg == *a* ]]; then
     loadAllKeys
   else
-    loadSpecificKey $2
+    checkKey $2
+    if [ $loaded == 1 ]; then
+      loadSpecificKey $2
+    fi
   fi
 }
 
@@ -80,7 +83,7 @@ function sshfsMount () {
   destination=$3
   echo "$target --> $destination"
   if [ "$(mount|grep $destination\ )" == '' ]; then
-    sshfs -o idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
+    sshfs -o reconnect,idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
     if [ "$(mount|grep $destination)" == '' ]; then
       echo "Mount failed"
       return 1

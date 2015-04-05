@@ -8,7 +8,7 @@ sudo pm-suspend
 sleep 1
 #xrandr --output LVDS --off
 #xrandr --output LVDS --auto
-/home/lordievader/scripts/gamma.sh LVDS --set
+/home/lordievader/scripts/gamma2.sh --load
 
 counter=0
 while ! ping -q -c1 8.8.8.8 && [ $counter -lt 5 ] ; do

@@ -87,6 +87,17 @@ function unmountNFS()
   return 0
 }
 
+function runDirvish
+{
+  /usr/sbin/dirvish-expire
+  /usr/sbin/dirvish-runall
+}
+
+function showStats
+{
+  df -h|grep -e Filesystem -e backup
+}
+
 function exitBackup
 {
   if mountCheck 'local' $HOSTNAME; then
@@ -125,7 +136,9 @@ function main()
       exitBackup
     fi
   fi
-  #exitBackup
+  runDirvish
+  showStats
+  exitBackup
 }
 
 main

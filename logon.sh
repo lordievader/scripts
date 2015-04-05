@@ -19,11 +19,7 @@ if [ "$(pgrep kmcd.py)" == '' ]; then
 fi
 
 # Load gamma settings
-cd /home/$USER
-screens=($(xrandr|grep "\ connected"|cut -d ' ' -f1))
-for screen in ${screens[@]}; do
-  ./scripts/gamma.sh $screen --set
-done
+/home/lordievader/scripts/gamma2.sh --load
 
 # Restart MPD/Pulseaudio
 #if [ $HOSTNAME == 'star-destroyer' ]; then
