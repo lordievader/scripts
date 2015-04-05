@@ -2,15 +2,15 @@
 export DISPLAY=:0
 
 # Start synergy
-if [ $HOSTNAME == 'millenium-falcon' ]; then
-    if [ "$(pgrep synergys)" == '' ]; then
-        synergys -c ~/.synergy.conf
-    fi
-else
-    if [ "$(pgrep synergyc)" == '' ]; then
-        synergyc millenium-falcon
-    fi
-fi
+#if [ $HOSTNAME == 'millenium-falcon' ]; then
+#    if [ "$(pgrep synergys)" == '' ]; then
+#        synergys -c ~/.synergy.conf
+#    fi
+#else
+#    if [ "$(pgrep synergyc)" == '' ]; then
+#        synergyc millenium-falcon
+#    fi
+#fi
 
 # Start kmc
 cd /home/$USER
@@ -20,8 +20,3 @@ fi
 
 # Load gamma settings
 /home/lordievader/scripts/gamma2.sh --load
-
-# Restart MPD/Pulseaudio
-#if [ $HOSTNAME == 'star-destroyer' ]; then
-#  ssh lordievader@corellian-corvette "sudo service music restart"
-#fi
