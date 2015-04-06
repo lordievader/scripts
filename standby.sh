@@ -1,6 +1,29 @@
 #!/bin/bash
 export DISPLAY=:0
 
+# Kill ssh sessions to darth-sidious
+PIDS=($(ps aux|grep \[@\]darth-sidious|awk '{print $2}'))
+for PID in ${PIDS[@]}; do
+  KILLED=0
+  COUNT=0
+  while [[ $KILLED == 0 ]]; do
+    echo Killing $PID
+    if [[ $COUNT -lt 10 ]]; then
+      kill $PID
+    else
+      kill -9 $PID
+    fi
+    if [[ -z "$(ps -hp $PID)" ]]; then
+      KILLED=1
+    else
+      COUNT=$COUNT+1
+    fi
+  done
+done
+
+# Kill Cantata
+pkill cantata
+
 # Unmount filesystems
 /home/lordievader/scripts/mount.sh -u
 
