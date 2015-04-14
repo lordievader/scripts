@@ -19,4 +19,4 @@ if [ "$(pgrep kmcd.py)" == '' ]; then
 fi
 
 # Load gamma settings
-/home/lordievader/scripts/gamma2.sh --load
+/home/lordievader/scripts/gamma2.sh --icc

@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
-import random
 import os
+import random
+import re
+import select
 import signal
 import socket
-import select
 import subprocess
 import sys
 import time
@@ -80,16 +81,16 @@ def get_width():
     resolution = subprocess.getoutput(command).split('x')[0]
     return resolution
 
-def set_background(image):
-
-    command = "feh --bg-fill {0}".format(image)
+def set_background(images):
+    images = " ".join(images)
+    command = "feh --bg-fill {0}".format(images)
     print(command)
     subprocess.getoutput(command)
-    set_lockscreen(image)
+    set_lockscreen(images.split(" ")[0])
 
 def set_lockscreen(image):
-
     resolution = get_width()
+    resolution = 1920
     extension = image[-3:]
     if extension == "jpg":
 
@@ -140,28 +141,41 @@ def change():
   pid = os.getpid()
   others = subprocess.getoutput("pgrep wallpaper.py").split("\n")
   for other in others:
-
       if other != '' and int(other) != int(pid):
-
         running = True
         break
-  if running == False:
 
+  if running == False:
     print("Wallpaper manager not running please start it!")
     sys.exit()
+
   data = bytes("change", 'utf-8')
   send(data)
+
+def getdisplays():
+    xrandr=subprocess.getoutput('xrandr')
+    displays = []
+    for line in xrandr.split('\n'):
+      if re.search('\ connected', line):
+        display = re.sub('\ .*$','',line)
+        displays.append(display)
+    return displays
+
 
 def main():
 
     mode, delay, image_folders = load_arguments()
     if mode == 'start':
+      displays = getdisplays()
 
       kill_others()
       global image_pool
       image_pool = generate_image_pool(image_folders)
-      image = random_image(image_pool)
-      set_background(image)
+      images = []
+      for i in range(len(displays)):
+        image = random_image(image_pool)
+        images.append(image)
+      set_background(images)
 
       global wait_time
       wait_time = int(delay/10)
@@ -170,20 +184,21 @@ def main():
       global time_change
       time_change = 0
       while True:
-
           if time_change == 0:
-
             time_change = time.time() + int(delay)
+
           if time.time() > time_change:
-
-            image = random_image(image_pool)
-            set_background(image)
+            images = []
+            for i in range(len(displays)):
+                image = random_image(image_pool)
+                images.append(image)
+            set_background(images)
             time_change = 0
+
           else:
-
             receive()
-    else:
 
+    else:
       change()
 
 if __name__ == "__main__":

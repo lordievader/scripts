@@ -128,6 +128,25 @@ function configure () {
   fi
 }
 
+function icc () {
+  MONITOR="$1"
+  ICC="$2"
+  if [[ -z $ICC ]]; then
+    ICC="$MONITOR"
+    MONITOR=""
+  fi
+  if [[ -z $ICC ]]; then
+    ICC="/usr/share/color/icc/dell_u2713hm/custom_color.icc"
+  fi
+  if [[ -z $MONITOR ]]; then
+    for i in {0..2}; do
+      oyranos-monitor -d $i $ICC
+    done
+  else
+    oyranos-monitor -d $MONITOR $ICC
+  fi
+}
+
 function load () {
   MONITOR="$1"
   if [[ -z $MONITOR ]]; then
@@ -167,7 +186,9 @@ function main () {
     load $2
   elif [[ "$1" == "--reset" ]]; then
     reset $2
+  elif [[ "$1" == "--icc" ]]; then
+    icc $2 $3
   fi
 }
 
-main $1 $2
+main $1 $2 $3
