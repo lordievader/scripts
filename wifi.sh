@@ -3,7 +3,7 @@ if [ -z $1 ]; then
     echo "$0 <config-file>"
     exit
 fi
-interface='wlan0'
+interface='wlo1'
 ifconfig $interface down
 iwconfig $interface mode managed
 ifconfig $interface up

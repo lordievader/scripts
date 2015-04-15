@@ -15,7 +15,7 @@ if os.getuid() != 0:
 def enumerate_disks():
   disks = []
   for dev in os.listdir('/dev/'):
-    if ((dev.startswith("sd") and len(dev) == 3) or
+    if (dev.startswith("sd") or
         dev.startswith("dm")):
       disks.append(dev)
   return disks

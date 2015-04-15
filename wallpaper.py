@@ -1,16 +1,21 @@
 #!/usr/bin/python3
 
-import random
 import os
+import random
+import re
+import select
 import signal
+import socket
 import subprocess
 import sys
 import time
 
-if len(sys.argv) < 2:
+def too_few_arguments(num):
 
-  print("Too few arguments")
-  sys.exit()
+  if len(sys.argv) < num+1:
+
+    print("Too few arguments")
+    sys.exit()
 
 def kill_others():
 
@@ -18,22 +23,37 @@ def kill_others():
     others = subprocess.getoutput("pgrep wallpaper.py").split("\n")
     for other in others:
 
-        if int(other) != int(pid):
+        if other != '' and int(other) != int(pid):
 
             os.kill(int(other), signal.SIGTERM)
 
 def load_arguments():
 
-    image_folders = []
-    for i, folder in enumerate(sys.argv):
+    too_few_arguments(1)
+    mode = 'start'
+    try:
 
-        if i == 1:
+      int(sys.argv[1])
+    except:
 
-            time = folder
-        else:
+      mode = 'change'
+    if mode == 'start':
 
-            image_folders.append(folder)
-    return (time, image_folders)
+      too_few_arguments(2)
+      image_folders = []
+      for i, folder in enumerate(sys.argv):
+
+          if i == 1:
+
+              delay = int(folder)
+          else:
+
+              image_folders.append(folder)
+    else:
+
+      delay = 0
+      image_folders = ''
+    return (mode, delay, image_folders)
 
 def generate_image_pool(image_folders):
 
@@ -55,37 +75,131 @@ def random_image(image_pool):
     number = random.randint(0,len(image_pool))
     return image_pool[number]
 
-def set_background(image):
+def get_width():
 
-    command = "feh --bg-fill {0}".format(image)
+    command = "xrandr|grep \*|awk '{print $1}'"
+    resolution = subprocess.getoutput(command).split('x')[0]
+    return resolution
+
+def set_background(images):
+    images = " ".join(images)
+    command = "feh --bg-fill {0}".format(images)
+    print(command)
     subprocess.getoutput(command)
-    set_lockscreen(image)
+    set_lockscreen(images.split(" ")[0])
 
 def set_lockscreen(image):
-
+    resolution = get_width()
+    resolution = 1920
     extension = image[-3:]
     if extension == "jpg":
 
-        command = "convert {0} /tmp/lockscreen.png".format(image)
+        command = "convert -resize {0} {1} /tmp/lockscreen.png".format(resolution, image)
     else:
 
         command = "cp {0} /tmp/lockscreen.png".format(image)
+    print(command)
     subprocess.getoutput(command)
 
-        
+def handler():
+
+  global sock
+  sock  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  sock.bind(('127.0.0.1', 1025))
+  sock.setblocking(0)
+
+def receive():
+
+  global sock
+  result = select.select([sock],[],[], 5)
+  if result[0]:
+
+    data, addr = result[0][0].recvfrom(1024)
+    try:
+
+      data_string = str(data,'utf-8').replace('\n','')
+      if data_string == 'change':
+
+        print("Changing")
+        global image_pool
+        image = random_image(image_pool)
+        set_background(image)
+        global time_change
+        time_change = 0
+    except:
+
+      pass
+
+def send(data):
+
+  sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  sock.sendto(data, ('127.0.0.1', 1025))
+
+def change():
+
+  running = False
+  pid = os.getpid()
+  others = subprocess.getoutput("pgrep wallpaper.py").split("\n")
+  for other in others:
+      if other != '' and int(other) != int(pid):
+        running = True
+        break
+
+  if running == False:
+    print("Wallpaper manager not running please start it!")
+    sys.exit()
+
+  data = bytes("change", 'utf-8')
+  send(data)
+
+def getdisplays():
+    xrandr=subprocess.getoutput('xrandr')
+    displays = []
+    for line in xrandr.split('\n'):
+      if re.search('\ connected', line):
+        display = re.sub('\ .*$','',line)
+        displays.append(display)
+    return displays
+
 
 def main():
 
-    kill_others()
-    delay, image_folders = load_arguments()
-    image_pool = generate_image_pool(image_folders)
-    image = random_image(image_pool)
-    set_background(image)
-    while True:
+    mode, delay, image_folders = load_arguments()
+    if mode == 'start':
+      displays = getdisplays()
 
-        time.sleep(int(delay))
+      kill_others()
+      global image_pool
+      image_pool = generate_image_pool(image_folders)
+      images = []
+      for i in range(len(displays)):
         image = random_image(image_pool)
-        set_background(image)
+        images.append(image)
+      set_background(images)
+
+      global wait_time
+      wait_time = int(delay/10)
+      handler()
+
+      global time_change
+      time_change = 0
+      while True:
+          if time_change == 0:
+            time_change = time.time() + int(delay)
+
+          if time.time() > time_change:
+            images = []
+            for i in range(len(displays)):
+                image = random_image(image_pool)
+                images.append(image)
+            set_background(images)
+            time_change = 0
+
+          else:
+            receive()
+
+    else:
+      change()
 
 if __name__ == "__main__":
 
