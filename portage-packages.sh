@@ -14,7 +14,7 @@ function output {
   awk '{
     Package = $2;
     Size = $1;
-    printf "%s -- %u MiB\n", Package, Size;
+    printf "%5uMiB %-100s\n", Size, Package;
   }'|less
 }
 
