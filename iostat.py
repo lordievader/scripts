@@ -8,6 +8,7 @@ import time
 import threading
 import queue
 import datetime
+import operator
 
 if os.getuid() != 0:
   raise SystemExit("Needs root privileges")
@@ -37,12 +38,23 @@ class Collector(threading.Thread):
         disks['phy'][phy] = {'partitions': {dev: {}}}
     return disks
 
+  def dm_links(self):
+    dm = {}
+    for item in os.listdir('/dev/mapper'):
+      path = os.path.join('/dev/mapper', item)
+      if os.path.islink(path):
+        real_path = os.path.realpath(path)
+        dm_name = real_path.split('/')[2]
+        dm[dm_name] = item
+    return dm
+
   def enumerate_disks(self):
+    dm = self.dm_links()
     disks = {'phy': {},
              'dm': {},}
     names = []
     for dev in os.listdir('/dev/'):
-      if dev.startswith("sd") or dev.startswith('md'):
+      if dev.startswith("sd"):
         disks = self.add_disk(disks, dev)
         names.append(dev)
 
@@ -51,7 +63,8 @@ class Collector(threading.Thread):
                              'readps': 0,
                              'writeps': 0,
                              'read': 0,
-                             'write': 0,}
+                             'write': 0,
+                             'name': dm[dev]}
         names.append(dev)
     return (disks, names)
 
@@ -88,9 +101,9 @@ class Printer():
 
   def print_results(self):
     results = self.collector.get_results()
-    lines = {}
     os.system('clear')
     for type_disk in results:
+      lines = {}
       if type_disk == 'phy':
         line = "Physical disks"
 
@@ -103,11 +116,14 @@ class Printer():
       for disk in results[type_disk]:
         data = results[type_disk][disk]
         if 'readps' in data and (data['readps'] > 0 or data['writeps'] > 0):
-          lines[data['writeps']]= data
-          lines[data['writeps']]['name'] = disk
+          if type_disk == 'phy':
+            data['name'] = disk
 
-      for line in reversed(sorted(lines)):
-        print("%-5s R:%8.2f W:%8.2f" % (lines[line]['name'],lines[line]['readps'], lines[line]['writeps']))
+          lines["%-80s R:%8.2f W:%8.2f" % (data['name'], data['readps'], data['writeps'])]= data['writeps']
+
+
+      for line in reversed(sorted(lines.items(), key=operator.itemgetter(1))):
+        print(line[0])
       print()
 
 def main():

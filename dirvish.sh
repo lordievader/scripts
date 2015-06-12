@@ -3,9 +3,10 @@ BACKUP_MOUNTED=$(cryptsetup status /dev/mapper/backup|head -n1|awk '{print $3}')
 if [ $BACKUP_MOUNTED == "active" ]; then
   echo "Mounting backup"
   mount /backup/corellian-corvette
-  mount /backup/han-solo
-  mount /backup/r2d2
-  mount /backup/padme
+  mount /backup/vm
+  #mount /backup/han-solo
+  #mount /backup/r2d2
+  #mount /backup/padme
   echo "Done"
 
   echo "Starting run"
@@ -17,9 +18,10 @@ if [ $BACKUP_MOUNTED == "active" ]; then
 
   echo "Unmounting backup"
   umount /backup/corellian-corvette
-  umount /backup/han-solo
-  umount /backup/r2d2
-  umount /backup/padme
+  umount /backup/vm
+  #umount /backup/han-solo
+  #umount /backup/r2d2
+  #umount /backup/padme
   echo "Done"
 else
   echo "Backup not unlocked!"
