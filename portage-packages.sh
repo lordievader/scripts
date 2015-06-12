@@ -32,7 +32,8 @@ function depends {
     SIZE=$(echo $PACKAGE|cut -d" " -f1)
     PACKAGE=$(echo $PACKAGE|sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"|cut -d" " -f2)
     echo "($SIZE MiB) $PACKAGE reverse depends:"
-    equery --quiet depends $PACKAGE|awk '{
+    #equery --quiet depends $PACKAGE|awk '{
+    qdepends -Q ${PACKAGE%%-[0-9]*} | awk '{
       Package = $1;
       printf "\t%s\n", Package;
     }'

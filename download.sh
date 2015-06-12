@@ -1,7 +1,7 @@
 #!/bin/bash
 Input="$1"
-Input=$(python -c "import urllib; print urllib.quote('''$Input''')")
-#echo $Input
+#Input=$(python -c "import urllib; print urllib.quote('''$Input''')")
+echo $Input
 Range1=$2
 Range2=$3
 Cookie=$4
