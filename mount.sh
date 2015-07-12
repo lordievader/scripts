@@ -2,6 +2,7 @@
 
 # Define a mount dictionary
 declare -A mounts=( ["/home/lordievader"]="/mnt/data/homedir"
+                    ["/home/lordievader/Downloads"]="/mnt/data/downloads"
                     ["/mnt/multimedia/shows"]="/mnt/multimedia/shows"
                     ["/mnt/multimedia/movies"]="/mnt/multimedia/movies"
                     ["/mnt/multimedia/music"]="/mnt/multimedia/music"
