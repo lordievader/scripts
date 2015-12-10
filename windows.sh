@@ -5,6 +5,7 @@ if [ "$(whoami)" != 'root' ]; then
 fi
 MOUNTED=0
 if ! [ -z "$(mount|grep /mnt/windows)" ]; then
+  systemctl stop mnt-windows.automount 
   umount /mnt/windows
   MOUNTED=1
   sleep 2

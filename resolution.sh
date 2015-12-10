@@ -1,6 +1,6 @@
 #!/bin/bash
-CURDIR=$(pwd)
-for item in $CURDIR/*; do
+CURDIR="$(pwd)"
+for item in "$CURDIR"/*; do
   ext=${item: -3}
   if [[ $ext != 'srt' ]] && [[ $ext != 'sub' ]] && [[ $ext != 'idx' ]]; then
     DATA=$(ffmpeg -i "$item" 2>&1|grep "from\|Video:")
@@ -14,4 +14,4 @@ for item in $CURDIR/*; do
       }
     }'
   fi
-done|sort -n
+done |sort -n

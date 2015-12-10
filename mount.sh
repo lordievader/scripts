@@ -1,18 +1,16 @@
 #!/bin/bash
 
 # Define a mount dictionary
-declare -A mounts=( ["/home/lordievader"]="/mnt/data/homedir"
+declare -A nfs=( ["/home/lordievader"]="/mnt/data/homedir"
                     ["/home/lordievader/Downloads"]="/mnt/data/downloads"
                     ["/mnt/multimedia/shows"]="/mnt/multimedia/shows"
                     ["/mnt/multimedia/movies"]="/mnt/multimedia/movies"
                     ["/mnt/multimedia/music"]="/mnt/multimedia/music"
                     ["/mnt/data/software"]="/mnt/data/software"
-                    #["/mnt/data/storage"]="/mnt/data/storage"
                     ["/mnt/data/www"]="/mnt/data/www"
                     ["/mnt/data/src"]="/mnt/data/src"
                     ["/mnt/data/git"]="/mnt/data/git")
-declare -A truecrypt=(["/dev/sda5"]="/media/Documents"
-                      ["/dev/sda8"]="/media/Photos")
+
 
 # Define the host
 nfs_host='corellian-corvette.mini.true'
@@ -66,7 +64,7 @@ function nfsMount () {
   destination=$3
   echo "$target --> $destination"
   if [ "$(mount|grep $destination\ )" == '' ]; then
-    sudo mount -o hard,intr,retrans=3,timeo=10 $host:$target $destination
+    sudo mount -o soft,intr,retrans=3,timeo=10 $host:$target $destination
     if [ "$(mount|grep $destination)" == '' ]; then
       echo "Mount failed"
       return 1
@@ -79,9 +77,9 @@ function nfsMount () {
 
 function sshfsMount () {
   host=$1
-  user='lordievader'
   target=$2
   destination=$3
+  user='lordievader'
   echo "$target --> $destination"
   if [ "$(mount|grep $destination\ )" == '' ]; then
     sshfs -o reconnect,idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
@@ -147,8 +145,8 @@ function kill_used () {
   used_by=($(lsof -t $mount))
 
   for pid in ${used_by[@]}; do
-    ps hp $pid
     echo "Filesystem used by $pid, killing. Flags: $flags"
+    ps hp $pid
     kill $flags $pid
   done
 }
@@ -158,7 +156,7 @@ function unmount_helper () {
   mount=$2
   lazy=$3
 
-  echo "Unmounting $mount"
+#   echo "Unmounting $mount"
   if [ $type == 'nfs' ]; then
     sudo umount $lazy $mount
   elif [ $type == 'sshfs' ]; then
@@ -170,69 +168,60 @@ function unmount_helper () {
 
 function unmount {
 
-  # NFS mount points
-  nfs_mounts=($(df -hT|grep nfs|awk '{print $7}'))
-  for mount in ${nfs_mounts[@]}; do
+    # NFS mount points
+    nfs_mounts=($(cat /proc/mounts|grep nfs|awk '{print $2}'))
+    for mount in ${nfs_mounts[@]}; do
     counter=0
-    echo $mount
-    while [ "$(mount|grep $mount)" != '' ] && [ $counter -lt 5 ]; do
-      echo "Try: $counter"
-      if [ $counter -lt 4 ]; then
-        kill_used $mount
-      else
-        kill_used $mount '-9'
-      fi
-      unmount_helper 'nfs' $mount
-      counter=$(echo $counter+1|bc)
+    echo "Unmounting $mount"
+    while [ "$(cat /proc/mounts|grep nfs|awk '{print $2}'|grep $mount)" != '' ] && [ $counter -lt 5 ]; do
+        if [[ $counter > 0 ]]; then
+            echo "Try: $counter"
+        fi
+        if sudo fping -q -t100 -c1 8.8.8.8 &> /dev/null; then
+            if [ $counter -lt 4 ]; then
+                kill_used $mount
+            else
+                kill_used $mount '-9'
+            fi
+            unmount_helper 'nfs' $mount
+        else
+            unmount_helper 'nfs' $mount '-l'
+        fi
+        counter=$(echo $counter+1|bc)
     done
-    if [ "$(mount|grep $mount)" != '' ]; then
-      echo "Unmount failed, will lazy unmount"
-      unmount_helper 'nfs' $mount '-l'
+    if [ "$(cat /proc/mounts|grep nfs|awk '{print $2}'|grep $mount)" != '' ]; then
+       echo "Unmount failed, will lazy unmount"
+       unmount_helper 'nfs' $mount '-l'
     fi
   done
 
   # SSHFS mounts
-  sshfs_mounts=($(df -hT|grep sshfs|awk '{print $7}'))
+  sshfs_mounts=($(cat /proc/mounts|grep sshfs|awk '{print $2}'))
   for mount in ${sshfs_mounts[@]}; do
     counter=0
-    echo $mount
-    while [ "$(mount|grep $mount)" != '' ] && [ $counter -lt 5 ]; do
-      echo "Try: $counter"
-      if [ $counter -lt 4 ]; then
-        kill_used $mount
-      else
-        kill_used $mount '-9'
-      fi
-      unmount_helper 'sshfs' $mount
-      counter=$(echo $counter+1|bc)
+    echo "Unmounting $mount"
+    while [ "$(cat /proc/mounts|grep sshfs|awk '{print $2}'|grep $mount)" != '' ] && [ $counter -lt 5 ]; do
+        if [[ $counter > 0 ]]; then
+            echo "Try: $counter"
+        fi
+        if sudo fping -q -t100 -c1 8.8.8.8 &> /dev/null; then
+            if [ $counter -lt 4 ]; then
+                kill_used $mount
+            else
+                kill_used $mount '-9'
+            fi
+            unmount_helper 'sshfs' $mount
+        else
+            unmount_helper 'sshfs' $mount '-z'
+        fi
+        counter=$(echo $counter+1|bc)
     done
-    if [ "$(mount|grep $mount)" != '' ]; then
-      echo "Unmount failed, will lazy unmount"
-      unmount_helper 'sshfs' $mount '-z'
-    fi
-  done
-
-  # Truecrypt mounts
-  truecrypt_mounts=($(df -hT|grep truecrypt|awk '{print $7}'))
-  for mount in ${truecrypt_mounts[@]}; do
-    counter=0
-    echo $mount
-    while [ "$(mount|grep $mount)" != '' ] && [ $counter -lt 5 ]; do
-      echo "Try: $counter"
-      if [ $counter -lt 4 ]; then
-        kill_used $mount
-      else
-        kill_used $mount '-9'
-      fi
-      unmount_helper 'truecrypt' $mount
-      counter=$(echo $counter+1|bc)
-    done
-    if [ "$(mount|grep $mount)" != '' ]; then
-      echo "Unmount failed"
+    if [ "$(cat /proc/mounts|grep sshfs|awk '{print $2}'|grep $mount)" != '' ]; then
+        echo "Unmount failed, will lazy unmount"
+        unmount_helper 'sshfs' $mount '-z'
     fi
   done
 }
-
 
 ##  Main loop
 if [ -z $1 ]; then
@@ -244,35 +233,31 @@ Usage: $0 [options]
 
 elif [ $1 == "-m" ]; then
 
-  # Check what transport protocol needs to be used and mount things
-  if ping -q -c1 $nfs_host  > /dev/null; then
-    echo "Using NFS"
-    for mount in ${!mounts[@]}; do
-      if ! nfsMount $nfs_host $mount ${mounts[$mount]}; then
-        exit 1
-      fi
-    done
-  else
-    echo "Using SSHFS"
-    for mount in ${!mounts[@]}; do
-      if ! sshfsMount $sshfs_host $mount ${mounts[$mount]}; then
-        exit 1
-      fi
-    done
-  fi
-
-elif [ $1 == "-t" ]; then
-  
-  # Truecrypt mounts
-  echo "Mounting Truecrypt volumes"
-  for mount in ${!truecrypt[@]}; do
-    if ! truecryptMount $mount ${truecrypt[$mount]}; then
-      exit 1
+    # Check what transport protocol needs to be used and mount things
+    if sudo fping -q -t100 -c1 8.8.8.8 &> /dev/null; then
+        echo "Pinging"
+        if sudo fping -q -t100 -c1 $nfs_host &> /dev/null; then
+            echo "Using NFS"
+            for mount in ${!nfs[@]}; do
+                if ! nfsMount $nfs_host $mount ${nfs[$mount]}; then
+                    exit 1
+                fi
+            done
+        else
+            echo "Using SSHFS"
+            for mount in ${!nfs[@]}; do
+            if ! sshfsMount $sshfs_host $mount ${nfs[$mount]}; then
+                exit 1
+            fi
+            done
+        fi
+    else
+        echo "No internet connection!"
     fi
-  done
 
 elif [ $1 == "-u" ]; then
     unmount
+
 elif [[ $1 == -*k* ]]; then
     loadKey $1 $2
 fi

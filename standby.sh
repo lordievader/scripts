@@ -42,7 +42,7 @@ sleep 1
 #xrandr --output LVDS --auto
 
 # Reapply gamma, if needed
-/home/lordievader/scripts/gamma2.sh --icc
+/home/lordievader/scripts/gamma2.sh --load
 
 # Wait for the network to be up
 counter=0
