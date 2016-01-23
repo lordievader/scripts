@@ -8,7 +8,7 @@ for item in $DIR* $DIR.* ; do
     if [[ $item != '.' ]] && [[ $item != '..' ]]; then
         du -xks "$item"
     fi
-done | sort -nr | awk '{
+done | sort -nr | sed -e 's|\([0-9]\+\)\s*\(.*\)|\1;\2|g' -e 's|\s\+|\*|g' -e 's|;|\ |g'| awk '{
     Size = $1;
     Directory = $2;
     if ( Size > 1024 && Size <= 1048576 ) {
@@ -23,4 +23,4 @@ done | sort -nr | awk '{
         printf "%5u kB %-50s\n", Size, Directory;
     }
 
-  }'|less -c
+  }'|sed 's|\*|\ |g'|less -c
