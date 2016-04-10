@@ -41,16 +41,20 @@ def spawnDaemon(func):
     os._exit(os.EX_OK)
 
 def wakeup():
-    time.sleep(5)
-    networkmanager.nm()
+    """Does what is necessary to wakeup.
+    """
+    output, connection = networkmanager.check()
+    if connection is False:
+        time.sleep(5)
+        networkmanager.nm()
+
     program_control.run_command('/home/lordievader/scripts/gamma2.sh --load')
     if not program_control.check_command(
             '/home/lordievader/scripts/mount.sh -c'):
-        time.sleep(10)
         program_control.run_command('/home/lordievader/scripts/mount.sh -m')
 
 if __name__ == '__main__':
     os.environ['DISPLAY'] = ':0'
     wakeup()
     #sys.argv.append('-f')
-    first_wake.main()
+    #first_wake.main()

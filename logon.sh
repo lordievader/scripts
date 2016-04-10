@@ -3,9 +3,9 @@ export DISPLAY=:0
 
 # Start kmc
 cd /home/$USER
-if ! pgrep python3; then
+if ! pgrep kmcd; then
   echo "Starting KMCD"
-  nohup python3 /home/lordievader/Projects/Python/kmc/main.py&
+  nohup python3 /usr/share/kmc/main.py -d&
 fi
 
 # Load gamma settings

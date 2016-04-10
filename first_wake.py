@@ -1,6 +1,4 @@
 #!/usr/bin/python3
-#exit()
-
 import os
 import re
 import datetime
@@ -10,7 +8,6 @@ import time
 
 if '/home/lordievader/Projects/Python/kmc' not in sys.path:
     sys.path.insert(0, '/home/lordievader/Projects/Python/kmc')
-
 import kmcc
 import libdbus
 import lordievader
@@ -37,6 +34,7 @@ def start_program(program):
     else:
         print("{0} running".format(program.capitalize()))
 
+
 def virtual_desktop(number):
     bus = libdbus.dbus_connect(
         name='org.kde.KWin',
@@ -52,7 +50,11 @@ def check():
     return False
 
 
-def set_up():
+def set_up(f_wake=False):
+    import ipdb; ipdb.set_trace() # BREAKPOINT
+    if f_wake is False:
+        return
+
     if check() or '-f' in sys.argv:
         start_program('cantata')
         start_program('thunderbird')
@@ -66,9 +68,13 @@ def set_up():
         print("Not home")
 
 
-def main():
-    logger = lordievader.logsetup.log_setup(
-        'first_wake', None, 'DEBUG')
+def first_wake(logger):
+    """Checks if this is the first wake and does whatever is necessary.
+
+    :param logger: logger object
+    :type logger: a standard logging object
+    """
+    logger = logger.getChild('first_wake')
     first_wake = False
     if os.path.isfile(tmp_file):
         with open(tmp_file, 'r') as f:
@@ -90,7 +96,7 @@ def main():
         logger.info("This is the first wake")
         write_to_file(cur.day, cur.hour)
         set_up()
-        exit(0)
+        return False
 
     else:
         logger.info("This is NOT the first wake")
@@ -98,9 +104,19 @@ def main():
             logger.info('First wake forced')
 
             set_up()
-        exit(0)
+
+        return False
+
+    return True
+
+
+def main():
+    logger = lordievader.logsetup.log_setup(
+        'first_wake', None, 'DEBUG')
+    f_wake = first_wake(logger)
+    set_up(f_wake)
 
 if __name__ == '__main__':
     os.environ['DISPLAY'] = ':0'
     main()
-    #set_up()
+

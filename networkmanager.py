@@ -3,6 +3,7 @@ import subprocess
 import os
 import time
 
+
 def wifi():
     command = "nmcli -p dev wifi list |grep Infra|sort|awk '{print $1}'|uniq"
     output = subprocess.getoutput(command)
@@ -12,9 +13,9 @@ def wifi():
             print('Eduroam!')
             command = "nmcli c up eduroam"
             print(subprocess.getoutput(command))
-            process = subprocess.Popen(command, env=dict(os.environ, DISPLAY=":0"), shell=True,
-                                    stderr=subprocess.PIPE,
-                                    stdout=subprocess.PIPE, bufsize=1)
+            process = subprocess.Popen(
+                command, env=dict(os.environ, DISPLAY=":0"), shell=True,
+                stderr=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=1)
             for line in iter(process.stdout.readline, b''):
                 print(str(line, 'utf-8').replace('\n', ''))
 
@@ -22,11 +23,12 @@ def wifi():
             print('Breedstraat65!')
             command = "nmcli c up Breedstraat65"
             print(subprocess.getoutput(command))
-            process = subprocess.Popen(command, env=dict(os.environ, DISPLAY=":0"), shell=True,
-                                    stderr=subprocess.PIPE,
-                                    stdout=subprocess.PIPE, bufsize=1)
+            process = subprocess.Popen(
+                command, env=dict(os.environ, DISPLAY=":0"), shell=True,
+                stderr=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=1)
             for line in iter(process.stdout.readline, b''):
                 print(str(line, 'utf-8').replace('\n', ''))
+
 
 def bridge(output):
     device = output.split(' ')[0]
@@ -35,16 +37,32 @@ def bridge(output):
             subprocess.getoutput('nmcli c down bridge-br0')
             wifi()
 
+
+def check():
+    output = subprocess.getoutput('nmcli d')
+    for line in output.split('\n'):
+        if ' connected' in line:
+            break
+
+    else:
+        print("Not connected")
+        return output, False
+
+    return output, True
+
+
 def nm():
-    command = "nmcli d|grep '\ connected'"
-    output = subprocess.getoutput(command)
-    if not output:
-        wifi()
+    output, connection = check()
+    print("Connected: {0}".format(connection))
+    if not connection:
+        #wifi()
+        time.sleep(5)
 
     else:
         bridge(output)
 
-    print("There should be a network connection... Don't quote me on that. Really, don't. I REALLY advice you not to do that.")
+    #print("There should be a network connection... Don't quote me on that."
+           #"Really, don't. I REALLY advice you not to do that.")
 
 if __name__ == '__main__':
     nm()

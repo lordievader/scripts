@@ -20,7 +20,15 @@ declare -A nfs=( ["/home/lordievader"]="/mnt/data/homedir"
 nfs_host='corellian-corvette.mini.true'
 sshfs_host='corellian'
 
+function findAgent () {
+    AGENTPID=$(ps ux|grep '[s]sh-agent'|awk '{print $2}')
+    SOCKPID=$(echo $AGENTPID -1|bc)
+    SOCKPATH=$(/bin/ls /tmp/ssh-*/agent.$SOCKPID)
+    export SSH_AUTH_SOCK=$SOCKPATH
+}
+
 function checkKey () {
+  findAgent
   keyname=$1
   wanted_print=$(ssh-keygen -lf ~/.ssh/$keyname|cut -d' ' -f2)
   fingerprints=$(ssh-add -l|awk '{print $2}'|grep $wanted_print)
@@ -32,6 +40,7 @@ function checkKey () {
 }
 
 function loadSpecificKey () {
+  findAgent
   keyname=$1
   echo "Loading key $key"
   TTY=$(tty)
@@ -46,6 +55,7 @@ function loadSpecificKey () {
 }
 
 function loadAllKeys {
+  findAgent
   keynames=('masterkey' 'millenium-falcon')
   for key in ${keynames[@]}; do
     checkKey $key
@@ -58,6 +68,7 @@ function loadAllKeys {
 }
 
 function loadKey () {
+  findAgent
   arg=$1
   if [[ $arg == *a* ]]; then
     loadAllKeys
@@ -75,7 +86,7 @@ function nfsMount () {
   destination=$3
   echo "$target --> $destination"
   if [ "$(mount|grep $destination\ )" == '' ]; then
-    sudo mount -o soft,intr,retrans=3,timeo=10 $host:$target $destination
+    sudo mount -o rw,intr,nolock,tcp,rsize=32768,wsize=32768 $host:$target $destination
     if [ "$(mount|grep $destination)" == '' ]; then
       echo "Mount failed"
       return 1
@@ -87,6 +98,7 @@ function nfsMount () {
 }
 
 function sshfsMount () {
+  findAgent
   host=$1
   target=$2
   destination=$3
