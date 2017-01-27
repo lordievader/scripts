@@ -10,6 +10,7 @@ declare -A nfs=( ["/home/lordievader"]="/mnt/data/homedir"
                     ["/mnt/multimedia/shows"]="/mnt/multimedia/shows"
                     ["/mnt/multimedia/movies"]="/mnt/multimedia/movies"
                     ["/mnt/multimedia/music"]="/mnt/multimedia/music"
+                    ["/mnt/multimedia/photos"]="/mnt/multimedia/photos"
                     ["/mnt/data/software"]="/mnt/data/software"
                     ["/mnt/data/www"]="/mnt/data/www"
                     ["/mnt/data/src"]="/mnt/data/src"
@@ -107,7 +108,8 @@ function sshfsMount () {
   #exit 1
   echo "$target --> $destination"
   if [ "$(mount|grep $destination\ )" == '' ]; then
-    sshfs -o allow_other,reconnect,idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
+    #sshfs -oauto_cache,reconnect,no_readahead -o allow_other,reconnect,idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
+    sshfs -o cache=yes,kernel_cache,compression=no,large_read,allow_other,reconnect,idmap=user,ServerAliveInterval=5 $user@$host:$target $destination
     if [ "$(mount|grep $destination)" == '' ]; then
       echo "Mount failed"
       return 1
