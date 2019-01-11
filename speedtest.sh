@@ -35,11 +35,11 @@ function test_ssh () {
     SLAVE=$2
     size=$3
     if [[ $CORELLIAN == 1 ]]; then
-        pv -tpreb -s ${size}M -S /dev/zero|ssh -i ~/.ssh/masterkey corellian dd of=/dev/null
+        ssh -i ~/.ssh/masterkey corellian pv -s ${size}M -S /dev/zero|pv -tpreb -s ${size}M >/dev/null
     elif [[ $SLAVE == 1 ]]; then
-        pv -tpreb -s ${size}M -S /dev/zero|ssh -i ~/.ssh/masterkey 10.0.2.1 dd of=/dev/null
+        ssh -i ~/.ssh/masterkey 10.0.2.1 pv -s ${size}M -S /dev/zero|pv -tpreb -s ${size}M >/dev/null
     else
-        pv -tpreb -s ${size}M -S/dev/zero|ssh -i ~/.ssh/masterkey corellian dd of=/dev/null
+        ssh -i ~/.ssh/masterkey corellian pv -s ${size}M -S /dev/zero|pv -tpreb -s ${size}M >/dev/null
     fi
 }
 
