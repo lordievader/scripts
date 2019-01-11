@@ -1,18 +1,11 @@
 #!/bin/bash
-AGENT_PID=$(pgrep -u $USER ssh-agent|head -1)
-if [[ -z "$AGENT_PID" ]]; then
-  ssh-agent
-  exit
-fi
-
-for ITEM in /tmp/*; do
-  if [[ $ITEM == *ssh* ]] && [[ "$(stat -c '%U' $ITEM)" == $USER ]]; then
-    AGENT_DIR=$ITEM
-    AGENT_SOCKET=$(echo $ITEM/*)
+AGENT_PID=$(pgrep -u lordievader ssh-agent|head -1)
+for AGENT_DIR in /tmp/ssh-*; do
+  if [[ "$(stat -c '%U' $AGENT_DIR)" == $USER ]]; then
+    AGENT_SOCKET=$(echo $AGENT_DIR/*)
     break
   fi
 done
 
-echo "SSH_AUTH_SOCK=$AGENT_SOCKET; export SSH_AUTH_SOCK;"
-echo "SSH_AGENT_PID=$AGENT_PID; export SSH_AGENT_PID;"
-echo "echo Agent pid $AGENT_PID;"
+echo "export SSH_AGENT_PID=$AGENT_PID;"
+echo "export SSH_AUTH_SOCK=$AGENT_SOCKET;"
