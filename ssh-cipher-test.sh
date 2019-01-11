@@ -1,10 +1,5 @@
 #!/bin/bash
-for cipher in aes128-ctr aes192-ctr aes256-ctr arcfour256 arcfour128 aes128-cbc 3des-cbc blowfish-cbc cast128-cbc aes192-cbc aes256-cbc arcfour
+for i in $(ssh -Q cipher)
 do
-   echo "$cipher"
-   for try in 1 2
-   do
-      scp -i ~/.ssh/masterkey -c "$cipher" /tmp/testfile root@localhost:/dev/null
-   done
-   echo ""
+    dd if=/dev/zero bs=1000000 count=1000 2> /dev/null | ssh -c $i localhost "(/usr/bin/time -p cat) > /dev/null" 2>&1 | grep real | awk '{print "'$i':\t "1000 / $2" MB/s" }';
 done
