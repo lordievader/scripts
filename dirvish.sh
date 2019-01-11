@@ -1,4 +1,8 @@
 #!/bin/bash
+function log () {
+    printf "%s: %s\n" "$(date +"%Y-%m-%d %H:%M")" "${@}"
+}
+
 function checkLV {
   available=true
   for item in $(lvs -o lv_name,lv_attr --noheadings|grep backup|sed -e 's,^\ \+,,g' -e 's,\ \+,+,g'); do
@@ -13,82 +17,49 @@ function checkLV {
 }
 
 function mountBackup {
-  echo -n "Mounting backup... "
-  mount /backup/corellian-corvette
-  mount /backup/vm
-  echo "done!"
+    log 'mounting backup'
+    mount -v /backup
+    log 'backup mounted'
 }
 
 function umountBackup {
-  echo -n "Unmounting backup... "
-  umount /backup/corellian-corvette
-  if [[ $? != 0 ]]; then
-    echo
-    lsof /backup/corellian-corvette
-  fi
-  umount /backup/vm
-  if [[ $? != 0 ]]; then
-    echo
-    lsof /backup/vm
-  fi
-  echo "done!"
+    log 'unmounting backup'
+    umount -v /backup
+    if [[ $? != 0 ]]; then
+        lsof /backup
+    fi
+    log 'backup unmounted'
 }
 
 function dirvishExpire {
-  echo "Running expire"
-  dirvish-expire
-  echo "Done"
+    log 'expire current snapshots'
+    dirvish-expire
+    log 'done expire'
 }
 
 function dirvishRun {
-  echo "Starting dirvish run"
-  dirvish-runall
-  echo "Done"
+    log 'starting Dirvish run'
+    dirvish-runall
+    log 'Dirvish is done'
 }
 
 function stats {
-    echo "Stats"
-    df -h|grep -e Filesystem -e backup
-    echo "Done"
+    log 'backup statistics'
+    /backup/stats.sh $(date +"%Y%m%d")
+    echo ''
+    df -h /backup
+
 }
 
 if [[ checkLV == false ]]; then
-  echo "One or more LogicalVolumes are not available."
-  exit 1
+    echo "One or more LogicalVolumes are not available."
+    exit 1
 else
-  mountBackup
-  dirvishExpire
-  dirvishRun
-  stats
-  sleep 60
-  umountBackup
+    mountBackup
+    dirvishExpire
+    dirvishRun
+    stats
+    sleep 60
+    umountBackup
 fi
 
-exit 0
-BACKUP_MOUNTED=$(cryptsetup status /dev/mapper/backup|head -n1|awk '{print $3}')
-if [ $BACKUP_MOUNTED == "active" ]; then
-  echo "Mounting backup"
-  mount /backup/corellian-corvette
-  mount /backup/vm
-  #mount /backup/han-solo
-  #mount /backup/r2d2
-  #mount /backup/padme
-  echo "Done"
-
-  echo "Starting run"
-  /usr/sbin/dirvish-runall
-  echo "Done"
-  
-  echo "Stats"
-  echo $(df -h|grep -e Filesystem -e backup)
-
-  echo "Unmounting backup"
-  umount /backup/corellian-corvette
-  umount /backup/vm
-  #umount /backup/han-solo
-  #umount /backup/r2d2
-  #umount /backup/padme
-  echo "Done"
-else
-  echo "Backup not unlocked!"
-fi
