@@ -1,9 +1,8 @@
 #!/bin/bash
-#NUMPACKAGES=$(echo $0|sed 's,.*top\([0-9]*\).*,\1,')
 NUMPACKAGES=$2
 
 function get {
-  qsize -am | awk '{
+  qsize -m | awk '{
     Package = substr($1, 1, length($1) - 1);
     Size = $6;
     printf "%u %s\n", Size, Package;
