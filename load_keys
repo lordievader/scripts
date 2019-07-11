@@ -1,0 +1,6 @@
+#!/bin/bash
+export SSH_ASKPASS=/home/lordievader/scripts/ssh-askpass
+keychain --eval ~/.ssh/masterkey
+keychain --eval ~/.ssh/github
+
+keychain -l

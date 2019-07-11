@@ -1,0 +1,3 @@
+#!/bin/bash
+HOST=$(hostname)
+pass "ssh/$USER@$HOST" | head -n 1
