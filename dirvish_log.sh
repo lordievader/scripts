@@ -1,9 +1,8 @@
 #!/bin/bash
-# Performs a backup run.
+# Prints some statistics about the backup.
 function log () {
     printf "%s: %s\n" "$(date +"%Y-%m-%d %H:%M")" "${@}"
 }
-
 function checkLV {
     OLD_IFS=$IFS
     IFS=$'\n'
@@ -34,18 +33,6 @@ function umountBackup {
     log 'backup unmounted'
 }
 
-function dirvishExpire {
-    log 'expire current snapshots'
-    dirvish-expire
-    log 'done expire'
-}
-
-function dirvishRun {
-    log 'starting Dirvish run'
-    dirvish-runall
-    log 'Dirvish is done'
-}
-
 function stats {
     log 'backup statistics'
     /backup/stats.sh $(date +"%Y%m%d")
@@ -59,8 +46,6 @@ if [[ checkLV == false ]]; then
     exit 1
 else
     mountBackup
-    dirvishExpire
-    dirvishRun
+    stats
     umountBackup
 fi
-
