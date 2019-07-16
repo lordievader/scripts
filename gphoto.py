@@ -121,7 +121,6 @@ def main_dng():
             elif ('GoogleDrive' in dng_dir and 
                   os.path.isfile(os.path.join(dng_dir,photo))):
                 delete(os.path.join(dng_dir, photo))
-                    
 
 
 def main():
@@ -132,5 +131,5 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
     main()
