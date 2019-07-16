@@ -22,11 +22,11 @@ function test_http () {
     SOFTLAYER=$2
     size=$3
     if [[ $SNT == 1 ]]; then
-        wget --output-document=/dev/null "http://ftp.snt.utwente.nl/pub/test/${size}M"
+        wget --output-document=/dev/null "https://ftp.snt.utwente.nl/pub/test/${size}M"
     elif [[ $SOFTLAYER == 1 ]]; then
         wget --output-document=/dev/null "http://speedtest.wdc01.softlayer.com/downloads/test${size}.zip"
     else
-        wget --output-document=/dev/null "http://ftp.snt.utwente.nl/pub/test/${size}M"
+        wget --output-document=/dev/null "https://ftp.snt.utwente.nl/pub/test/${size}M"
     fi
 }
 
